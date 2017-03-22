@@ -27,51 +27,51 @@ int check_error(int status, char * msg) {
 }
 
 void usage(char * program_name) {
-	printf("Usage: %s ", program_name);
-	printf("[-t format] [-i intervalle] [-l limite] [-c] prog arg ... arg\n");
-	exit(EXIT_FAILURE);
+    printf("Usage: %s ", program_name);
+    printf("[-t format] [-i intervalle] [-l limite] [-c] prog arg ... arg\n");
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[]) {
-	int c, errflg = 0;
-	extern char *optarg;
-	extern int optind;
+    int c, errflg = 0;
+    extern char *optarg;
+    extern int optind;
 
-	char * time_format = NULL; // option -t
-	int interval = 10000; // option -i
-	int limit = 0; // option -l
-	int code_change = 0; // option -c
+    char * time_format = NULL; // option -t
+    int interval = 10000; // option -i
+    int limit = 0; // option -l
+    int code_change = 0; // option -c
 
-	while ((c = getopt(argc, argv, "+t:i:l:c")) != EOF) {
-		switch (c) {
-			case 't':
-				time_format = optarg;
-				break;
-			case 'i':
-				interval = atoi(optarg);
-				break;
-			case 'l':
-				limit = atoi(optarg);
-				break;
-			case 'c':
-				code_change = 1;
-				break;
-			case '?': /*option non reconnue */
-				errflg++;
-				break;
-		}
-	}
-	if (errflg) usage(argv[0]);
+    while ((c = getopt(argc, argv, "+t:i:l:c")) != EOF) {
+        switch (c) {
+            case 't':
+                time_format = optarg;
+                break;
+            case 'i':
+                interval = atoi(optarg);
+                break;
+            case 'l':
+                limit = atoi(optarg);
+                break;
+            case 'c':
+                code_change = 1;
+                break;
+            case '?': /*option non reconnue */
+                errflg++;
+                break;
+        }
+    }
+    if (errflg) usage(argv[0]);
 
-	printf("OPTION t = %s\n", time_format);
-	printf("OPTION i = %d\n", interval);
-	printf("OPTION l = %d\n", limit);
-	if (code_change) printf("OPTION c :)\n");
+    printf("OPTION t = %s\n", time_format);
+    printf("OPTION i = %d\n", interval);
+    printf("OPTION l = %d\n", limit);
+    if (code_change) printf("OPTION c :)\n");
 
-	(void) time_format;
-	(void) interval;
-	(void) limit;
-	(void) code_change;
+    (void) time_format;
+    (void) interval;
+    (void) limit;
+    (void) code_change;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
