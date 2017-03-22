@@ -6,3 +6,4 @@
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 check_error	detecter.c	/^int check_error(int status, char * msg) {$/;"	f
 main	detecter.c	/^int main(int argc, char *argv[]) {$/;"	f
+usage	detecter.c	/^void usage(char * program_name) {$/;"	f

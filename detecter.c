@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* TODO :
+ - remplacer les printf par des write
+
+*/
+
 
 /**
  * @brief Vérifie s'il y a une erreur
@@ -19,6 +24,12 @@ int check_error(int status, char * msg) {
         exit(EXIT_FAILURE);
     }
     return status;
+}
+
+void usage(char * program_name) {
+	printf("Usage: %s ", program_name);
+	printf("[-t format] [-i intervalle] [-l limite] [-c] prog arg ... arg\n");
+	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[]) {
@@ -50,6 +61,7 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+	if (errflg) usage(argv[0]);
 
 	printf("OPTION t = %s\n", time_format);
 	printf("OPTION i = %d\n", interval);
