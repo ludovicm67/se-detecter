@@ -74,6 +74,10 @@ int main(int argc, char *argv[]) {
         printf("ARG %d = %s\n", i, argv[i]);
     }
 
+    for (i = optind; i < argc; i++) {
+        printf("COMMANDE (arg[%d]) = %s\n", i-optind, argv[i]);
+    }
+
     (void) time_format;
     (void) interval;
     (void) limit;
