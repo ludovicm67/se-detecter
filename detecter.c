@@ -34,8 +34,6 @@ void usage(char * program_name) {
 
 int main(int argc, char *argv[]) {
     int c, errflg = 0;
-    extern char *optarg;
-    extern int optind;
 
     char * time_format = NULL; // option -t
     int interval = 10000; // option -i
@@ -62,11 +60,19 @@ int main(int argc, char *argv[]) {
         }
     }
     if (errflg) usage(argv[0]);
+    if ((argc - optind) <= 0) usage(argv[0]);
 
+    // Debug des options :
     printf("OPTION t = %s\n", time_format);
     printf("OPTION i = %d\n", interval);
     printf("OPTION l = %d\n", limit);
     if (code_change) printf("OPTION c :)\n");
+
+    // Debug des arguments
+    int i;
+    for (i = 0; i < argc; i++) {
+        printf("ARG %d = %s\n", i, argv[i]);
+    }
 
     (void) time_format;
     (void) interval;
