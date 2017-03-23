@@ -57,7 +57,7 @@ void print_time(char * time_format) {
 
 int main(int argc, char *argv[]) {
     int c, errflg = 0, raison;
-    char *args[argc];
+    char* args[10];
 
     char * time_format = NULL; // option -t
     int interval = 10000; // option -i
@@ -100,8 +100,9 @@ int main(int argc, char *argv[]) {
 
     for (i = optind; i < argc; i++) {
         printf("COMMANDE (arg[%d]) = %s\n", i-optind, argv[i]);
-        if((i-optind)>0){
-          args[i-optind-1] = argv[i];
+        for(int j = i-optind; j < argc; j++){
+          args[i-optind] = argv[i];
+          printf("ARG (args[%d]) = %s\n", i, args[i]);
         }
     }
 
