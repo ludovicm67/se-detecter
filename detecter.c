@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 /* TODO :
  - remplacer les printf par des write
+ - dans print_time voir en détail pour vérifier les erreurs
 
 */
 
@@ -30,6 +32,26 @@ void usage(char * program_name) {
     printf("Usage: %s ", program_name);
     printf("[-t format] [-i intervalle] [-l limite] [-c] prog arg ... arg\n");
     exit(EXIT_FAILURE);
+}
+
+void print_time(char * time_format) {
+    char outstr[200];
+    time_t t;
+    struct tm *tmp;
+
+    t = time(NULL);
+    tmp = localtime(&t);
+    if (tmp == NULL) {
+       perror("localtime");
+       exit(EXIT_FAILURE);
+    }
+
+    if (strftime(outstr, sizeof(outstr), time_format, tmp) == 0) {
+       fprintf(stderr, "strftime returned 0");
+       exit(EXIT_FAILURE);
+    }
+
+    printf("%s\n", outstr);
 }
 
 int main(int argc, char *argv[]) {
@@ -76,6 +98,14 @@ int main(int argc, char *argv[]) {
 
     for (i = optind; i < argc; i++) {
         printf("COMMANDE (arg[%d]) = %s\n", i-optind, argv[i]);
+    }
+
+    while (limit >= 0) {
+        if (time_format) print_time(time_format);
+
+        if (limit == 1) limit = -1;
+        if (limit > 0) limit--;
+        check_error(usleep(interval * 1000), "usleep");
     }
 
     (void) time_format;
