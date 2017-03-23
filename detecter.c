@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 /* TODO :
  - remplacer les printf par des write
@@ -55,7 +56,8 @@ void print_time(char * time_format) {
 }
 
 int main(int argc, char *argv[]) {
-    int c, errflg = 0;
+    int c, errflg = 0, raison;
+    char *args[argc];
 
     char * time_format = NULL; // option -t
     int interval = 10000; // option -i
@@ -98,6 +100,9 @@ int main(int argc, char *argv[]) {
 
     for (i = optind; i < argc; i++) {
         printf("COMMANDE (arg[%d]) = %s\n", i-optind, argv[i]);
+        if((i-optind)>0){
+          args[i-optind-1] = argv[i];
+        }
     }
 
     while (limit >= 0) {
@@ -106,6 +111,22 @@ int main(int argc, char *argv[]) {
         if (limit == 1) limit = -1;
         if (limit > 0) limit--;
         check_error(usleep(interval * 1000), "usleep");
+        switch(fork()){
+          case -1:
+            perror("fork");
+            exit(EXIT_FAILURE);
+            break;
+          case 0: // fils
+            execvp(argv[optind], args);
+            perror("execvp");
+            exit(EXIT_FAILURE);
+            break;
+          default: // père
+            if (wait(&raison)==-1){
+            perror("wait");
+            exit(EXIT_FAILURE);
+            }
+        }
     }
 
     (void) time_format;
