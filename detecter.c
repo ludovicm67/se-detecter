@@ -56,8 +56,9 @@ void print_time(char * time_format) {
 }
 
 int main(int argc, char *argv[]) {
-    int c, errflg = 0, raison;
+    int i, c, errflg = 0, raison, nb_args;
     char* args[10];
+    pid_t pid;
 
     char * time_format = NULL; // option -t
     int interval = 10000; // option -i
@@ -83,51 +84,30 @@ int main(int argc, char *argv[]) {
                 break;
         }
     }
+
+    // S'il y a eu un problème d'options ou d'argument
     if (errflg) usage(argv[0]);
-    if ((argc - optind) <= 0) usage(argv[0]);
+    nb_args = argc - optind;
+    if (nb_args <= 0) usage(argv[0]);
 
-    // Debug des options :
-    printf("OPTION t = %s\n", time_format);
-    printf("OPTION i = %d\n", interval);
-    printf("OPTION l = %d\n", limit);
-    if (code_change) printf("OPTION c :)\n");
-
-    // Debug des arguments
-    int i;
-    for (i = 0; i < argc; i++) {
-        printf("ARG %d = %s\n", i, argv[i]);
-    }
-
-    for (i = optind; i < argc; i++) {
-        printf("COMMANDE (arg[%d]) = %s\n", i-optind, argv[i]);
-        for(int j = i-optind; j < argc; j++){
-          args[i-optind] = argv[i];
-          printf("ARG (args[%d]) = %s\n", i, args[i]);
-        }
-    }
+    // On initialise le tableau d'arguments pour le exec
+    for (i = optind; i < argc; i++) args[i-optind] = argv[i];
+    args[nb_args] = NULL;
 
     while (limit >= 0) {
         if (time_format) print_time(time_format);
 
-        if (limit == 1) limit = -1;
-        if (limit > 0) limit--;
-        check_error(usleep(interval * 1000), "usleep");
-        switch(fork()){
-          case -1:
-            perror("fork");
-            exit(EXIT_FAILURE);
-            break;
-          case 0: // fils
+        check_error(pid = fork(), "fork");
+        if (!pid) { // fils
             execvp(argv[optind], args);
             perror("execvp");
             exit(EXIT_FAILURE);
-            break;
-          default: // père
-            if (wait(&raison)==-1){
-            perror("wait");
-            exit(EXIT_FAILURE);
-            }
         }
+        check_error(wait(&raison), "wait");
+
+        if (limit == 1) break;
+        if (limit > 0) limit--;
+        check_error(usleep(interval * 1000), "usleep");
     }
 
     (void) time_format;
