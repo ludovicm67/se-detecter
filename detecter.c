@@ -4,13 +4,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-/* TODO :
- - remplacer les printf par des write
- - dans print_time voir en détail pour vérifier les erreurs
-
-*/
-
-
 /**
  * @brief Vérifie s'il y a une erreur
  * @details Vérifie si la commande (qui doit nécéssairement retourner un int,
@@ -30,9 +23,16 @@ int check_error(int status, char * msg) {
 }
 
 void usage(char * program_name) {
-    printf("Usage: %s ", program_name);
-    printf("[-t format] [-i intervalle] [-l limite] [-c] prog arg ... arg\n");
-    exit(EXIT_FAILURE);
+    char msg[] = "Usage: %s ", program_name);
+    char msg1[] = "[-t format][-i intervalle][-l limite][-c] prog arg...arg\n";
+    if(write(2, msg, sizeof(msg))==-1){
+      perror("write");
+      exit(EXIT_FAILURE);
+    }
+    if(write(2, msg1, sizeof(msg1))==-1){
+      perror("write");
+      exit(EXIT_FAILURE);
+    }
 }
 
 void print_time(char * time_format) {
@@ -52,7 +52,10 @@ void print_time(char * time_format) {
        exit(EXIT_FAILURE);
     }
 
-    printf("%s\n", outstr);
+    if(write(1, outstr, sizeof(outstr)) == -1){
+      perror("write");
+      exit(EXIT_FAILURE);
+    }
 }
 
 int main(int argc, char *argv[]) {
