@@ -5,6 +5,19 @@
 #include <sys/wait.h>
 
 /**
+ * @brief Longeur d'une chaîne de caractère
+ * @details Retourne la longueur d'une chaîne de caractères
+ *
+ * @param str chaîne de caractères dont l'on souhaite connaître la longueur
+ * @return longueur de la chaine de caractères passée en argument (str)
+ */
+unsigned int str_length(char * str) {
+    int i = 0;
+    while (str[i] != '\0') i++;
+    return i;
+}
+
+/**
  * @brief Vérifie s'il y a une erreur
  * @details Vérifie si la commande (qui doit nécéssairement retourner un int,
  *          avec -1 en cas d'erreur) dans status a échouée ou non, ce qui est
@@ -23,16 +36,16 @@ int check_error(int status, char * msg) {
 }
 
 void usage(char * program_name) {
-    char msg[] = "Usage: %s ", program_name);
-    char msg1[] = "[-t format][-i intervalle][-l limite][-c] prog arg...arg\n";
-    if(write(2, msg, sizeof(msg))==-1){
-      perror("write");
-      exit(EXIT_FAILURE);
-    }
-    if(write(2, msg1, sizeof(msg1))==-1){
-      perror("write");
-      exit(EXIT_FAILURE);
-    }
+    char usage[] = "Usage: ";
+    char usage_opts[] = " [-t format][-i intervalle][-l limite][-c]";
+    char usage_args[] = " prog arg...arg\n";
+
+    check_error(write(2, usage, sizeof(usage)), "write");
+    check_error(write(2, program_name, str_length(program_name)), "write");
+    check_error(write(2, usage_opts, sizeof(usage_opts)), "write");
+    check_error(write(2, usage_args, sizeof(usage_args)), "write");
+
+    exit(EXIT_FAILURE);
 }
 
 void print_time(char * time_format) {
