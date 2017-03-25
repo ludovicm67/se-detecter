@@ -49,26 +49,27 @@ void usage(char * program_name) {
 }
 
 void print_time(char * time_format) {
+    char err_no_outstr[] = "strftime returned 0";
     char outstr[200];
-    time_t t;
     struct tm *tmp;
+    time_t t;
+    unsigned int nbc;
 
     t = time(NULL);
     tmp = localtime(&t);
     if (tmp == NULL) {
-       perror("localtime");
-       exit(EXIT_FAILURE);
+        perror("localtime");
+        exit(EXIT_FAILURE);
     }
 
-    if (strftime(outstr, sizeof(outstr), time_format, tmp) == 0) {
-       fprintf(stderr, "strftime returned 0");
-       exit(EXIT_FAILURE);
+    if ((nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)) == 0) {
+        check_error(write(2, err_no_outstr, sizeof(err_no_outstr)), "write");
+        exit(EXIT_FAILURE);
     }
+    outstr[nbc++] = '\n';
+    outstr[nbc] = '\0';
 
-    if(write(1, outstr, sizeof(outstr)) == -1){
-      perror("write");
-      exit(EXIT_FAILURE);
-    }
+    check_error(write(1, outstr, nbc), "write");
 }
 
 int main(int argc, char *argv[]) {
