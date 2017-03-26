@@ -73,7 +73,7 @@ void print_time(char * time_format) {
 }
 
 int main(int argc, char *argv[]) {
-    int i, c, errflg = 0, raison, nb_args;
+    int i, c, errflg = 0, raison, nb_args, octet_pf, octet_pf2, iteration = 0;
     char* args[10];
     pid_t pid;
 
@@ -122,10 +122,22 @@ int main(int argc, char *argv[]) {
         }
         check_error(wait(&raison), "wait");
 
-        if (limit == 1) break;
-        if (limit > 0) limit--;
-        check_error(usleep(interval * 1000), "usleep");
-    }
+        if(code_change){ // si l'option "c" est activée mais peut-être faire une fonction speciale ?
+          if(!iteration){
+            octet_pf = raison >> 8;
+          }
+          octet_pf2 = raison >> 8;
+          if(octet_pf != octet_pf2){
+            fprintf(stdout, "Code de retour: %d\n", octet_pf2);
+            octet_pf = octet_pf2;
+          }
+        }
+
+          if (limit == 1) break;
+          if (limit > 0) limit--;
+          check_error(usleep(interval * 1000), "usleep");
+          iteration++;
+        }
 
     (void) time_format;
     (void) interval;
