@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -48,6 +49,7 @@ void usage(char * program_name) {
     exit(EXIT_FAILURE);
 }
 
+
 void print_time(char * time_format) {
     char err_no_outstr[] = "strftime returned 0";
     char outstr[200];
@@ -73,8 +75,9 @@ void print_time(char * time_format) {
 }
 
 int main(int argc, char *argv[]) {
-    int i, c, errflg = 0, raison, nb_args, octet_pf, octet_pf2, iteration = 0;
-    char* args[10];
+    int c, i, raison, nb_args;
+    unsigned int errflg = 0, first = 1, last_code = 0, code;
+    char * args[argc];
     pid_t pid;
 
     char * time_format = NULL; // option -t
@@ -122,27 +125,29 @@ int main(int argc, char *argv[]) {
         }
         check_error(wait(&raison), "wait");
 
-        if(code_change){ // si l'option "c" est activée mais peut-être faire une fonction speciale ?
-          if(!iteration){
-            octet_pf = raison >> 8;
-          }
-          octet_pf2 = raison >> 8;
-          if(octet_pf != octet_pf2){
-            fprintf(stdout, "Code de retour: %d\n", octet_pf2);
-            octet_pf = octet_pf2;
-          }
+        if (WIFEXITED(raison)) code = WEXITSTATUS(raison);
+        else {
+            fprintf(
+                stderr,
+                "Le programme a été quitté d'une autre manière qu'un exit.\n"
+            );
+            exit(EXIT_FAILURE);
         }
 
-          if (limit == 1) break;
-          if (limit > 0) limit--;
-          check_error(usleep(interval * 1000), "usleep");
-          iteration++;
+        // teste s'il y a un changment de code de retour
+        if (code_change && (last_code != code || first)) {
+
+            printf("exit %d\n", code);
+
+            last_code = code;
+            first = 0;
         }
 
-    (void) time_format;
-    (void) interval;
-    (void) limit;
-    (void) code_change;
+        if (limit == 1) break;
+        if (limit > 0) limit--;
+
+        check_error(usleep(interval * 1000), "usleep");
+    }
 
     return EXIT_SUCCESS;
 }
