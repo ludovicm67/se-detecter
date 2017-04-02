@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 
 /**
  * @brief Longeur d'une chaîne de caractère
@@ -74,10 +75,27 @@ void print_time(char * time_format) {
     check_error(write(1, outstr, nbc), "write");
 }
 
+int getchar_buff(int fd){ // getchar bufferisé
+  static int nbAppels = 0;
+  static int buff_size = 0;
+  static unsigned char b[1024];
+  if (buff_size == 0) {
+      nbAppels = 0;
+      buff_size = read(fd, b, sizeof(b));
+      if (buff_size == -1 || buff_size == 0) return EOF;
+  }
+  buff_size--;
+  return b[nbAppels++];
+}
+
 int main(int argc, char *argv[]) {
-    int c, i, raison, nb_args;
+    int c, i, raison, nb_args, iteration = 0, affiche = 0, tube[2];
+    int pos_buff = 0, pos_buffC = 0, taille_buff = 1024, taille_buffC = 1024;
     unsigned int errflg = 0, first = 1, last_code = 0, code;
     char * args[argc];
+    char* buffer = malloc(taille_buff*sizeof(char));
+    char* current_buff = malloc(taille_buffC*sizeof(char));
+    char a;
     pid_t pid;
 
     char * time_format = NULL; // option -t
@@ -116,12 +134,54 @@ int main(int argc, char *argv[]) {
 
     while (limit >= 0) {
         if (time_format) print_time(time_format);
-
+        pipe(tube);
         check_error(pid = fork(), "fork");
         if (!pid) { // fils
+            close(tube[0]);
+            dup2(tube[1], 1);
             execvp(argv[optind], args);
             perror("execvp");
+            close(tube[1]);
             exit(EXIT_FAILURE);
+        }
+        else{ // père
+          close(tube[1]);
+          while(((a = getchar_buff(tube[0])) != EOF)){
+            if(!iteration){
+              affiche = 1;
+              *(buffer + (pos_buff++)) = a;
+              if(pos_buff == taille_buff){
+                taille_buff += 1024;
+                buffer = realloc(buffer, taille_buff*sizeof(char));
+                if(buffer == NULL){
+                  fprintf(stderr, "Allocation impossible\n" );
+                  exit(EXIT_FAILURE);
+                }
+              }
+            }
+            else affiche = 0;
+            *(current_buff + (pos_buffC++)) = a;
+            if(pos_buffC == taille_buffC){
+              taille_buffC += 1024;
+              current_buff = realloc(current_buff, taille_buffC*sizeof(char));
+              if(current_buff == NULL){
+                fprintf(stderr, "Allocation impossible\n" );
+                exit(EXIT_FAILURE);
+              }
+            }
+            iteration ++;
+          }
+          if(strcmp(buffer, current_buff)){
+            memset(buffer, 0, taille_buff);
+            strcpy(buffer, current_buff);
+            affiche = 1;
+          }
+          else affiche = 0;
+          pos_buff = 0;
+          pos_buffC = 0;
+          memset(current_buff, 0, taille_buff);
+          if(affiche) printf("%s", buffer);
+          close(tube[0]);
         }
         check_error(wait(&raison), "wait");
 
