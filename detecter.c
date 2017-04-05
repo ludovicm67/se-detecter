@@ -8,6 +8,47 @@
 
 #define BUFFER_SIZE 1024
 
+typedef struct buffer{
+  char content[BUFFER_SIZE]; // contenu du buffer
+  struct buffer* next; // pointeur sur le buffer suivant
+} *Buffer;
+
+Buffer new_buffer(){
+  Buffer b = malloc(sizeof(struct buffer));
+  b->next = NULL;
+  return b;
+}
+
+void free_buffer(Buffer b){
+  if(!b) return;
+  if (b->next) free_buffer(b->next);
+  free(b);
+}
+
+void print_buffer(Buffer b){
+  if(!b) return;
+  for(; b->next != NULL; b = b->next){
+    printf("%s", b->content);
+  }
+}
+
+int compare_buffer(Buffer b1, Buffer b2){
+  if(b1 == b2) return 1;
+  if(!b1 || !b2) return 0;
+  if(strlen(b1->content) != strlen(b2->content)) return 0;
+  if(!memcmp(b1, b2, strlen(b1->content))) return 1;
+  else return 0;
+}
+
+void read_buffer(int fd, Buffer b){
+  if (!b) return;
+  Buffer bc = b;
+  while(read(fd, bc->content, BUFFER_SIZE) != EOF){
+    bc->next = new_buffer();
+    bc = bc->next;
+  }
+}
+
 /**
  * @brief Vérifie s'il y a une erreur
  * @details Vérifie si la commande (qui doit nécéssairement retourner un int,
@@ -56,20 +97,6 @@ void print_time(char * time_format) {
     outstr[nbc] = '\0';
 
     check_error(write(1, outstr, nbc), "write");
-}
-
-// getchar bufferisé
-int getchar_buff(int fd) {
-  static int nbAppels = 0;
-  static int buff_size = 0;
-  static unsigned char b[BUFFER_SIZE];
-  if (buff_size == 0) {
-      nbAppels = 0;
-      buff_size = read(fd, b, sizeof(b));
-      if (buff_size == -1 || buff_size == 0) return EOF;
-  }
-  buff_size--;
-  return b[nbAppels++];
 }
 
 int main(int argc, char *argv[]) {
