@@ -11,11 +11,13 @@
 typedef struct buffer{
   char content[BUFFER_SIZE]; // contenu du buffer
   struct buffer* next; // pointeur sur le buffer suivant
+  unsigned int size;
 } *Buffer;
 
 Buffer new_buffer(){
   Buffer b = malloc(sizeof(struct buffer));
   b->next = NULL;
+  b->size = 0;
   return b;
 }
 
@@ -28,22 +30,22 @@ void free_buffer(Buffer b){
 void print_buffer(Buffer b){
   if(!b) return;
   for(; b->next != NULL; b = b->next){
-    printf("%s", b->content);
+    write(1, b->content, b->size);
   }
 }
 
 int compare_buffer(Buffer b1, Buffer b2){
   if(b1 == b2) return 1;
   if(!b1 || !b2) return 0;
-  if(strlen(b1->content) != strlen(b2->content)) return 0;
-  if(!memcmp(b1, b2, strlen(b1->content))) return 1;
+  if(b1->size != b2->size) return 0;
+  if(!memcmp(b1, b2, b1->size)) return 1;
   else return 0;
 }
 
 void read_buffer(int fd, Buffer b){
   if (!b) return;
   Buffer bc = b;
-  while(read(fd, bc->content, BUFFER_SIZE) != EOF){
+  while((bc->size = read(fd, bc->content, BUFFER_SIZE)) > 0){
     bc->next = new_buffer();
     bc = bc->next;
   }
@@ -100,15 +102,12 @@ void print_time(char * time_format) {
 }
 
 int main(int argc, char *argv[]) {
-    int c, i, raison, nb_args, iteration = 0, affiche = 0, tube[2];
-    int pos_buff = 0, pos_buffC = 0;
-    int taille_buff = BUFFER_SIZE, taille_buffC = BUFFER_SIZE;
+    int c, i, raison, nb_args, tube[2];
     unsigned int errflg = 0, first = 1, last_code = 0, code;
     char * args[argc];
-    char* buffer = malloc(taille_buff);
-    char* current_buff = malloc(taille_buffC);
-    char a;
     pid_t pid;
+    Buffer b = malloc(sizeof(struct buffer));
+    Buffer ba = malloc(sizeof(struct buffer)); // ancien buffer
 
     char * time_format = NULL; // option -t
     int interval = 10000; // option -i
@@ -163,43 +162,10 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         } else { // père
           close(tube[1]);
-          while (((a = getchar_buff(tube[0])) != EOF)) {
-            if (!iteration) {
-              affiche = 1;
-              *(buffer + (pos_buff++)) = a;
-              if (pos_buff == taille_buff) {
-                taille_buff += BUFFER_SIZE;
-                buffer = realloc(buffer, taille_buff);
-                if (buffer == NULL) {
-                  fprintf(stderr, "Allocation impossible\n");
-                  exit(EXIT_FAILURE);
-                }
-              }
-            } else affiche = 0;
-
-            *(current_buff + (pos_buffC++)) = a;
-            if (pos_buffC == taille_buffC) {
-              taille_buffC += BUFFER_SIZE;
-              printf("%d\n", taille_buffC);
-              fflush(stdout);
-              current_buff = realloc(current_buff, taille_buffC);
-              fflush(stdout);
-              if (current_buff == NULL) {
-                fprintf(stderr, "Allocation impossible\n");
-                exit(EXIT_FAILURE);
-              }
-            }
-            iteration ++;
-          }
-          if (memcmp(buffer, current_buff, taille_buffC)) {
-            memcpy(buffer, current_buff, taille_buffC);
-            affiche = 1;
-          } else affiche = 0;
-          pos_buff = 0;
-          pos_buffC = 0;
-          memset(current_buff, 0, taille_buff);
-          if (affiche) printf("bleh");
+          read_buffer(tube[0], b);
+          if(first || !compare_buffer(b, ba)) print_buffer(b);
           close(tube[0]);
+          ba = b;
         }
         check_error(wait(&raison), "wait");
 
