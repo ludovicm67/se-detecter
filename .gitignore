@@ -1,4 +1,8 @@
 detecter
 *.swp
 *.log
+*.tmp
 tags
+*.gcov
+*.gcda
+*.gcno

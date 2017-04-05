@@ -6,18 +6,7 @@
 #include <sys/wait.h>
 #include <string.h>
 
-/**
- * @brief Longeur d'une chaîne de caractère
- * @details Retourne la longueur d'une chaîne de caractères
- *
- * @param str chaîne de caractères dont l'on souhaite connaître la longueur
- * @return longueur de la chaine de caractères passée en argument (str)
- */
-unsigned int str_length(char * str) {
-    int i = 0;
-    while (str[i] != '\0') i++;
-    return i;
-}
+#define BUFFER_SIZE 1024
 
 /**
  * @brief Vérifie s'il y a une erreur
@@ -38,21 +27,15 @@ int check_error(int status, char * msg) {
 }
 
 void usage(char * program_name) {
-    char usage[] = "Usage: ";
-    char usage_opts[] = " [-t format][-i intervalle][-l limite][-c]";
-    char usage_args[] = " prog arg...arg\n";
-
-    check_error(write(2, usage, sizeof(usage)), "write");
-    check_error(write(2, program_name, str_length(program_name)), "write");
-    check_error(write(2, usage_opts, sizeof(usage_opts)), "write");
-    check_error(write(2, usage_args, sizeof(usage_args)), "write");
+    fprintf(stderr, "Usage: %s ", program_name);
+    fprintf(stderr, "[-t format][-i intervalle][-l limite][-c] ");
+    fprintf(stderr, " %s prog arg...arg\n", program_name);
 
     exit(EXIT_FAILURE);
 }
 
 
 void print_time(char * time_format) {
-    char err_no_outstr[] = "strftime returned 0";
     char outstr[200];
     struct tm *tmp;
     time_t t;
@@ -66,7 +49,7 @@ void print_time(char * time_format) {
     }
 
     if ((nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)) == 0) {
-        check_error(write(2, err_no_outstr, sizeof(err_no_outstr)), "write");
+        fprintf(stderr, "strftime returned 0\n");
         exit(EXIT_FAILURE);
     }
     outstr[nbc++] = '\n';
@@ -75,10 +58,11 @@ void print_time(char * time_format) {
     check_error(write(1, outstr, nbc), "write");
 }
 
-int getchar_buff(int fd){ // getchar bufferisé
+// getchar bufferisé
+int getchar_buff(int fd) {
   static int nbAppels = 0;
   static int buff_size = 0;
-  static unsigned char b[1024];
+  static unsigned char b[BUFFER_SIZE];
   if (buff_size == 0) {
       nbAppels = 0;
       buff_size = read(fd, b, sizeof(b));
@@ -90,11 +74,12 @@ int getchar_buff(int fd){ // getchar bufferisé
 
 int main(int argc, char *argv[]) {
     int c, i, raison, nb_args, iteration = 0, affiche = 0, tube[2];
-    int pos_buff = 0, pos_buffC = 0, taille_buff = 1024, taille_buffC = 1024;
+    int pos_buff = 0, pos_buffC = 0;
+    int taille_buff = BUFFER_SIZE, taille_buffC = BUFFER_SIZE;
     unsigned int errflg = 0, first = 1, last_code = 0, code;
     char * args[argc];
-    char* buffer = malloc(taille_buff*sizeof(char));
-    char* current_buff = malloc(taille_buffC*sizeof(char));
+    char* buffer = malloc(taille_buff);
+    char* current_buff = malloc(taille_buffC);
     char a;
     pid_t pid;
 
@@ -156,8 +141,8 @@ int main(int argc, char *argv[]) {
               affiche = 1;
               *(buffer + (pos_buff++)) = a;
               if (pos_buff == taille_buff) {
-                taille_buff += 1024;
-                buffer = realloc(buffer, taille_buff*sizeof(char));
+                taille_buff += BUFFER_SIZE;
+                buffer = realloc(buffer, taille_buff);
                 if (buffer == NULL) {
                   fprintf(stderr, "Allocation impossible\n");
                   exit(EXIT_FAILURE);
@@ -167,8 +152,11 @@ int main(int argc, char *argv[]) {
 
             *(current_buff + (pos_buffC++)) = a;
             if (pos_buffC == taille_buffC) {
-              taille_buffC += 1024;
-              current_buff = realloc(current_buff, taille_buffC*sizeof(char));
+              taille_buffC += BUFFER_SIZE;
+              printf("%d\n", taille_buffC);
+              fflush(stdout);
+              current_buff = realloc(current_buff, taille_buffC);
+              fflush(stdout);
               if (current_buff == NULL) {
                 fprintf(stderr, "Allocation impossible\n");
                 exit(EXIT_FAILURE);
@@ -176,15 +164,14 @@ int main(int argc, char *argv[]) {
             }
             iteration ++;
           }
-          if (strcmp(buffer, current_buff)) {
-            memset(buffer, 0, taille_buff);
-            strcpy(buffer, current_buff);
+          if (memcmp(buffer, current_buff, taille_buffC)) {
+            memcpy(buffer, current_buff, taille_buffC);
             affiche = 1;
           } else affiche = 0;
           pos_buff = 0;
           pos_buffC = 0;
           memset(current_buff, 0, taille_buff);
-          if (affiche) printf("%s", buffer);
+          if (affiche) printf("bleh");
           close(tube[0]);
         }
         check_error(wait(&raison), "wait");
@@ -200,9 +187,7 @@ int main(int argc, char *argv[]) {
 
         // teste s'il y a un changment de code de retour
         if (code_change && (last_code != code || first)) {
-
             printf("exit %d\n", code);
-
             last_code = code;
             first = 0;
         }
