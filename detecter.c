@@ -34,11 +34,12 @@ void print_buffer(Buffer b){
   }
 }
 
-int compare_buffer(Buffer b1, Buffer b2){
-  if(b1 == b2) return 1;
-  if(!b1 || !b2) return 0;
-  if(b1->size != b2->size) return 0;
-  if(!memcmp(b1, b2, b1->size)) return 1;
+int compare_buffer(Buffer b1, Buffer b2) {
+  if (b1 == b2) return 1;
+  if (!b1 || !b2) return 0;
+  if (b1->size != b2->size) return 0;
+  if (!memcmp(b1, b2, b1->size))
+    return 1 && compare_buffer(b1->next, b2->next);
   else return 0;
 }
 
@@ -163,9 +164,17 @@ int main(int argc, char *argv[]) {
         } else { // père
           close(tube[1]);
           read_buffer(tube[0], b);
-          if(first || !compare_buffer(b, ba)) print_buffer(b);
+printf("\n\n\n\n\n===========\nDEBUG b=%p\n", b);
+print_buffer(b);
+printf("\n\n===========\nMID ba=%p\n", ba);
+print_buffer(ba);
+printf("\n\n\n\n\n===========\nFIN DEBUG\n\n\n\n\n\n");
+          if (first || !compare_buffer(b, ba)) print_buffer(b);
           close(tube[0]);
           ba = b;
+
+          free_buffer(b);
+          b = new_buffer();
         }
         check_error(wait(&raison), "wait");
 
