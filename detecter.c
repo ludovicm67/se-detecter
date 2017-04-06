@@ -35,14 +35,6 @@ void print_buffer(Buffer b){
   }
 }
 
-int compare_buffer(Buffer b1, Buffer b2) {
-  if(b1 == b2) return 1;
-  if(!b1 || !b2) return 0;
-  if(b1->size != b2->size) return 0;
-  if(!memcmp(b1, b2, b1->size)) return 1;
-  else return 0;
-}
-
 unsigned int read_buffer(int fd, Buffer b) {
     unsigned int has_changed = 0, size;
     char tmp[BUFFER_SIZE];
@@ -189,6 +181,7 @@ int main(int argc, char *argv[]) {
         // teste s'il y a un changment de code de retour
         if(code_change && (last_code != code || first)) {
             printf("exit %d\n", code);
+            fflush(stdout);
             last_code = code;
         }
 
@@ -199,6 +192,8 @@ int main(int argc, char *argv[]) {
 
         check_error(usleep(interval * 1000), "usleep");
     }
+
+    free(b);
 
     return EXIT_SUCCESS;
 }
