@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
         check_error(usleep(interval * 1000), "usleep");
     }
 
-    free(b);
+    free_buffer(b);
 
     return EXIT_SUCCESS;
 }
