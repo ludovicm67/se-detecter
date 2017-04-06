@@ -164,15 +164,26 @@ int main(int argc, char *argv[]) {
         } else { // père
           close(tube[1]);
           read_buffer(tube[0], b);
-printf("\n\n\n\n\n===========\nDEBUG b=%p\n", b);
+/*printf("\n\n\n\n\n===========\nDEBUG b=%p\n", b);
 print_buffer(b);
 printf("\n\n===========\nMID ba=%p\n", ba);
 print_buffer(ba);
-printf("\n\n\n\n\n===========\nFIN DEBUG\n\n\n\n\n\n");
-          if (first || !compare_buffer(b, ba)) print_buffer(b);
+printf("\n\n\n\n\n===========\nFIN DEBUG\n\n\n\n\n\n");*/
+          if (first || !compare_buffer(b, ba)){
+            print_buffer(b);
+            free_buffer(ba);
+            ba = new_buffer();
+            ba = malloc(sizeof(struct buffer));
+            Buffer b_cpy = malloc(sizeof(struct buffer));
+            ba->size = b->size;
+            b_cpy = b;
+            while(b_cpy){
+              memcpy(ba, b_cpy, b_cpy->size);
+              b_cpy = b_cpy->next;
+              ba->next = malloc(sizeof(struct buffer));
+            }
+          }
           close(tube[0]);
-          ba = b;
-
           free_buffer(b);
           b = new_buffer();
         }
