@@ -6,3 +6,4 @@ tags
 *.gcov
 *.gcda
 *.gcno
+vgcore.*
