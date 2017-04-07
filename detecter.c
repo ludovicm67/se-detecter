@@ -57,10 +57,10 @@ void free_buffer(Buffer b) {
 }
 
 // Affiche le contenu stocké dans les buffer chaînés
-void print_buffer(Buffer b){
+void print_buffer(Buffer b) {
     if(!b) return;
-    for(; b->next != NULL; b = b->next){
-        write(1, b->content, b->size);
+    for(; b->next != NULL; b = b->next) {
+        CHECK_ERR(write(1, b->content, b->size), "write buffer");
     }
 }
 
@@ -167,16 +167,16 @@ int main(int argc, char *argv[]) {
         CHECK_ERR(pipe(tube), "pipe");
         CHECK_ERR((pid = fork()), "fork");
         if(!pid) { // fils
-            close(tube[0]);
-            dup2(tube[1], 1);
-            close(tube[1]);
+            CHECK_ERR(close(tube[0]), "close tube[0] (fils)");
+            CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)");
+            CHECK_ERR(close(tube[1]), "close tube[1] (fils)");
             execvp(argv[optind], args);
             CHECK_EXEC();
         } else { // père
-            close(tube[1]);
+            CHECK_ERR(close(tube[1]), "close tube[1] (parent)");
             affiche = read_buffer(tube[0], b);
             if(first || affiche) print_buffer(b);
-            close(tube[0]);
+            CHECK_ERR(close(tube[0]), "close tube[0] (parent)");
         }
         CHECK_ERR(wait(&raison), "wait");
 
