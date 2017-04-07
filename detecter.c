@@ -8,15 +8,43 @@
 
 #define BUFFER_SIZE 1024
 
+// Affiche un message sur la sortie d'erreur standard si status == value
+// et quitte le programme avec un EXIT_FAILURE
+#define CHECK_ERRVALUE(status, value, msg)  \
+    if(status == value) {                   \
+        fprintf(stderr, "%s\n", msg);       \
+        exit(EXIT_FAILURE);                 \
+    }
+
+// Affiche un message sur la sortie d'erreur standard si status == NULL,
+// et quitte le programme avec un EXIT_FAILURE
+#define CHECK_NULL(status, msg) CHECK_ERRVALUE(status, NULL, msg)
+
+// Affiche un perror et quitte le programme avec un EXIT_FAILURE si status==-1
+#define CHECK_ERR(status, msg)              \
+    if(status == -1) {                      \
+        perror(msg);                        \
+        exit(EXIT_FAILURE);                 \
+    }
+
+// Permet de gérer les erreurs après un exec
+#define CHECK_EXEC()                        \
+    perror("execvp");                       \
+    kill(getpid(), SIGUSR1);                \
+    exit(EXIT_FAILURE)
+
+
+// Structure pour un buffer chaîné
 typedef struct buffer {
   char content[BUFFER_SIZE]; // contenu du buffer
   struct buffer* next; // pointeur sur le buffer suivant
   unsigned int size;
 } *Buffer;
 
-
+// Permet de
 Buffer new_buffer() {
   Buffer b = malloc(sizeof(struct buffer));
+  CHECK_NULL(b, "buffer non alloué");
   b->next = NULL;
   b->size = 0;
   return b;
@@ -53,24 +81,6 @@ unsigned int read_buffer(int fd, Buffer b) {
     return has_changed;
 }
 
-/**
- * @brief Vérifie s'il y a une erreur
- * @details Vérifie si la commande (qui doit nécéssairement retourner un int,
- *          avec -1 en cas d'erreur) dans status a échouée ou non, ce qui est
- *          très pratique pour les primitives système par exemple. Lors d'une
- *          erreur, on affiche le message 'msg' et on quitte le programme.
- *
- * @param status un entier, en général le code de retour d'une fonction
- * @param msg le message à afficher en cas d'erreur
- */
-int check_error(int status, char * msg) {
-    if(status == -1) {
-        perror(msg);
-        exit(EXIT_FAILURE);
-    }
-    return status;
-}
-
 void usage(char * program_name) {
     fprintf(stderr, "Usage: %s ", program_name);
     fprintf(stderr, "[-t format][-i intervalle][-l limite][-c] ");
@@ -88,19 +98,18 @@ void print_time(char * time_format) {
 
     t = time(NULL);
     tmp = localtime(&t);
-    if(tmp == NULL) {
-        perror("localtime");
-        exit(EXIT_FAILURE);
-    }
 
-    if((nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)) == 0) {
-        fprintf(stderr, "strftime returned 0\n");
-        exit(EXIT_FAILURE);
-    }
+    CHECK_NULL(tmp, "localtime a une valeur NULL");
+
+    CHECK_ERRVALUE(
+        (nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)),
+        0, "strftime a retourné 0"
+    );
+
     outstr[nbc++] = '\n';
     outstr[nbc] = '\0';
 
-    check_error(write(1, outstr, nbc), "write");
+    CHECK_ERR(write(1, outstr, nbc), "write");
 }
 
 int main(int argc, char *argv[]) {
@@ -152,22 +161,21 @@ int main(int argc, char *argv[]) {
 
     while(limit >= 0) {
         if(time_format) print_time(time_format);
-        check_error(pipe(tube), "pipe");
-        check_error(pid = fork(), "fork");
+        CHECK_ERR(pipe(tube), "pipe");
+        CHECK_ERR((pid = fork()), "fork");
         if(!pid) { // fils
             close(tube[0]);
             dup2(tube[1], 1);
-            execvp(argv[optind], args);
-            perror("execvp");
             close(tube[1]);
-            exit(EXIT_FAILURE);
+            execvp(argv[optind], args);
+            CHECK_EXEC();
         } else { // père
             close(tube[1]);
             affiche = read_buffer(tube[0], b);
             if(first || affiche) print_buffer(b);
             close(tube[0]);
         }
-        check_error(wait(&raison), "wait");
+        CHECK_ERR(wait(&raison), "wait");
 
         if(WIFEXITED(raison)) code = WEXITSTATUS(raison);
         else {
@@ -190,7 +198,7 @@ int main(int argc, char *argv[]) {
         if(limit == 1) break;
         if(limit > 0) limit--;
 
-        check_error(usleep(interval * 1000), "usleep");
+        CHECK_ERR(usleep(interval * 1000), "usleep");
     }
 
     free_buffer(b);
