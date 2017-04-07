@@ -39,7 +39,7 @@ gcov:
 # Si on souhaite utiliser valgrind (conseillé), positionner la
 # variable VALGRIND ou utiliser la cible "test-avec-valgrind"
 
-test:	test-sans-valgrind
+test:	test-avec-valgrind
 
 test-sans-valgrind: all
 	@for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done

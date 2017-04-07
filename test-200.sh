@@ -25,7 +25,7 @@ fail ()
 
 DN=/dev/null
 
-./detecter -m cat $DN && fail "option -m inconnue"
-./detecter blop && fail "option -m inconnue"
+./detecter -a cat $DN && fail "option -a inconnue"
+./detecter commandeInconnue && fail "commande inconnue"
 
 exit 0

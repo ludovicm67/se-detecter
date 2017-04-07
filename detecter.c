@@ -10,10 +10,10 @@
 
 // Affiche un message sur la sortie d'erreur standard si status == value
 // et quitte le programme avec un EXIT_FAILURE
-#define CHECK_ERRVALUE(status, value, msg)  \
-    if(status == value) {                   \
-        fprintf(stderr, "%s\n", msg);       \
-        exit(EXIT_FAILURE);                 \
+#define CHECK_ERRVALUE(status, value, msg)          \
+    if(status == value) {                           \
+        fprintf(stderr, "%s\n", msg);               \
+        exit(EXIT_FAILURE);                         \
     }
 
 // Affiche un message sur la sortie d'erreur standard si status == NULL,
@@ -21,48 +21,50 @@
 #define CHECK_NULL(status, msg) CHECK_ERRVALUE(status, NULL, msg)
 
 // Affiche un perror et quitte le programme avec un EXIT_FAILURE si status==-1
-#define CHECK_ERR(status, msg)              \
-    if(status == -1) {                      \
-        perror(msg);                        \
-        exit(EXIT_FAILURE);                 \
+#define CHECK_ERR(status, msg)                      \
+    if(status == -1) {                              \
+        perror(msg);                                \
+        exit(EXIT_FAILURE);                         \
     }
 
-// Permet de gérer les erreurs après un exec
-#define CHECK_EXEC()                        \
-    perror("execvp");                       \
-    kill(getpid(), SIGUSR1);                \
+// Gère les erreurs après un exec
+#define CHECK_EXEC()                                \
+    perror("execvp");                               \
+    CHECK_ERR(kill(getpid(), SIGUSR1), "kill");     \
     exit(EXIT_FAILURE)
-
 
 // Structure pour un buffer chaîné
 typedef struct buffer {
-  char content[BUFFER_SIZE]; // contenu du buffer
-  struct buffer* next; // pointeur sur le buffer suivant
-  unsigned int size;
-} *Buffer;
+    char content[BUFFER_SIZE]; // contenu du buffer
+    struct buffer* next; // pointeur sur le buffer suivant
+    unsigned int size;
+} * Buffer;
 
-// Permet de
+// Initialise un nouveau buffer
 Buffer new_buffer() {
-  Buffer b = malloc(sizeof(struct buffer));
-  CHECK_NULL(b, "buffer non alloué");
-  b->next = NULL;
-  b->size = 0;
-  return b;
+    Buffer b = malloc(sizeof(struct buffer));
+    CHECK_NULL(b, "buffer non alloué");
+    b->next = NULL;
+    b->size = 0;
+    return b;
 }
 
+// Libère la mémoire utilisée par une suite de buffer chaînées
 void free_buffer(Buffer b) {
-  if(!b) return;
-  if(b->next) free_buffer(b->next);
-  free(b);
+    if(!b) return;
+    if(b->next) free_buffer(b->next);
+    free(b);
 }
 
+// Affiche le contenu stocké dans les buffer chaînés
 void print_buffer(Buffer b){
-  if(!b) return;
-  for(; b->next != NULL; b = b->next){
-    write(1, b->content, b->size);
-  }
+    if(!b) return;
+    for(; b->next != NULL; b = b->next){
+        write(1, b->content, b->size);
+    }
 }
 
+// Lit le contenu de fd et l'inscrit dans le buffer b
 unsigned int read_buffer(int fd, Buffer b) {
     unsigned int has_changed = 0, size;
     char tmp[BUFFER_SIZE];
@@ -81,6 +83,7 @@ unsigned int read_buffer(int fd, Buffer b) {
     return has_changed;
 }
 
+// Affiche le "usage"
 void usage(char * program_name) {
     fprintf(stderr, "Usage: %s ", program_name);
     fprintf(stderr, "[-t format][-i intervalle][-l limite][-c] ");
@@ -89,7 +92,7 @@ void usage(char * program_name) {
     exit(EXIT_FAILURE);
 }
 
-
+// Affiche le temps actuel dans le format spécifié avec time_format
 void print_time(char * time_format) {
     char outstr[200];
     struct tm *tmp;
@@ -99,7 +102,7 @@ void print_time(char * time_format) {
     t = time(NULL);
     tmp = localtime(&t);
 
-    CHECK_NULL(tmp, "localtime a une valeur NULL");
+    CHECK_NULL(tmp, "localtime a une valeur égale à NULL");
 
     CHECK_ERRVALUE(
         (nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)),
@@ -192,7 +195,6 @@ int main(int argc, char *argv[]) {
             fflush(stdout);
             last_code = code;
         }
-
 
         if(first) first = 0;
         if(limit == 1) break;
