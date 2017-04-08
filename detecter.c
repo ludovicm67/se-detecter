@@ -40,7 +40,11 @@ typedef struct buffer {
     unsigned int size;
 } * Buffer;
 
-// Initialise un nouveau buffer
+/**
+ * @brief Initialise un nouveau buffer
+ * @details Alloue un nouveau buffer et l'initialise
+ * @return Le nouveau buffer
+ */
 Buffer new_buffer() {
     Buffer b = malloc(sizeof(struct buffer));
     CHECK_NULL(b, "buffer non alloué");
@@ -49,14 +53,25 @@ Buffer new_buffer() {
     return b;
 }
 
-// Libère la mémoire utilisée par une suite de buffer chaînées
+/**
+ * @brief Libère la mémoire utilisée par le buffer
+ * @details Libère la mémoire utilisée par une suite de buffer chaînées
+ *
+ * @param b Le buffer que l'on ne souhaite plus utiliser
+ */
 void free_buffer(Buffer b) {
     if(!b) return;
     if(b->next) free_buffer(b->next);
     free(b);
 }
 
-// Affiche le contenu stocké dans les buffer chaînés
+/**
+ * @brief Affiche le contenu du buffer
+ * @details Affiche le contenu stocké dans les buffer chaînés sur la sortie
+ *          standard
+ *
+ * @param b Le buffer à afficher
+ */
 void print_buffer(Buffer b) {
     if(!b) return;
     for(; b->next != NULL; b = b->next) {
@@ -64,7 +79,15 @@ void print_buffer(Buffer b) {
     }
 }
 
-// Lit le contenu de fd et l'inscrit dans le buffer b
+/**
+ * @brief Rmplit le buffer b avec le ceontenu de fd
+ * @details Lit le contenu de fd et l'inscrit dans le buffer b
+ *
+ * @param fd Descripteur de fichier où on doit effectuer la lecture
+ * @param b Buffer dans lequel on doit écrire
+ *
+ * @return 1 si le contenu du buffer a changé, 0 sinon
+ */
 unsigned int read_buffer(int fd, Buffer b) {
     unsigned int has_changed = 0, size;
     char tmp[BUFFER_SIZE];
@@ -83,7 +106,12 @@ unsigned int read_buffer(int fd, Buffer b) {
     return has_changed;
 }
 
-// Affiche le "usage"
+/**
+ * @brief Affiche la manière dont on doit utiliser le programme
+ * @details Affiche les différentes options et arguments pour ce programme
+ *
+ * @param program_name Le nom du programme
+ */
 void usage(char * program_name) {
     fprintf(stderr, "Usage: %s ", program_name);
     fprintf(stderr, "[-t format][-i intervalle][-l limite][-c] ");
@@ -92,7 +120,12 @@ void usage(char * program_name) {
     exit(EXIT_FAILURE);
 }
 
-// Affiche le temps actuel dans le format spécifié avec time_format
+/**
+ * @brief Affiche le temps courant
+ * @details Affiche le temps actuel dans le format time_format spécifié
+ *
+ * @param time_format Format dans lequel on souhaite afficher le temps
+ */
 void print_time(char * time_format) {
     char outstr[200];
     struct tm *tmp;
@@ -106,7 +139,7 @@ void print_time(char * time_format) {
 
     CHECK_ERRVALUE(
         (nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)),
-        0, "strftime a retourné 0"
+        0, "strftime vaut 0 : le format pour le temps est-il bien renseigné ?"
     );
 
     outstr[nbc++] = '\n';
