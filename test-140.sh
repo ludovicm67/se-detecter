@@ -28,7 +28,7 @@ do
     date +%m:%Y
 done > f1.tmp
 
-./detecter -t %m:%Y -i1 -l10 cat /dev/null > f2.tmp \
+$V ./detecter -t %m:%Y -i1 -l10 cat /dev/null > f2.tmp \
 	&& cmp -s f1.tmp f2.tmp 		|| fail "date"
 
 exit 0

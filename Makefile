@@ -45,7 +45,7 @@ test-sans-valgrind: all
 	@for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
 
 test-avec-valgrind: all
-	VALGRIND="valgrind -q" ; export VALGRIND ; for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
+	VALGRIND="valgrind" ; export VALGRIND ; for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
 
 couverture-et-tests: clean coverage test gcov
 

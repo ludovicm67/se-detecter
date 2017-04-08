@@ -8,6 +8,13 @@
 
 #define BUFFER_SIZE 1024
 
+#define FILS \
+    CHECK_ERR(close(tube[0]), "close tube[0] (fils)", b); \
+    CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)", b); \
+    CHECK_ERR(close(tube[1]), "close tube[1] (fils)", b); \
+    execvp(argv[optind], args); \
+    CHECK_EXEC(b);
+
 // Affiche un message sur la sortie d'erreur standard si status == value
 // et quitte le programme avec un EXIT_FAILURE
 #define CHECK_ERRVALUE(status, value, msg, b)           \
@@ -206,11 +213,7 @@ int main(int argc, char *argv[]) {
         CHECK_ERR(pipe(tube), "pipe", b);
         CHECK_ERR((pid = fork()), "fork", b);
         if(!pid) { // fils
-            CHECK_ERR(close(tube[0]), "close tube[0] (fils)", b);
-            CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)", b);
-            CHECK_ERR(close(tube[1]), "close tube[1] (fils)", b);
-            execvp(argv[optind], args);
-            CHECK_EXEC(b);
+            FILS;
         } else { // père
             CHECK_ERR(close(tube[1]), "close tube[1] (parent)", b);
             affiche = read_buffer(tube[0], b);
