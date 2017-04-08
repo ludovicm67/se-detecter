@@ -7,3 +7,4 @@ tags
 *.gcda
 *.gcno
 vgcore.*
+*.macroless*

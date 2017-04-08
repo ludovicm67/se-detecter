@@ -25,22 +25,22 @@ DN=/dev/null
 
 # tests élémentaires sur les options
 
-./detecter					&& fail "pas d'arg"
+$V ./detecter					&& fail "pas d'arg"
 
-./detecter -i1 -l 1 cat $DN			|| fail "syntaxe -i1 -l 1"
+$V ./detecter -i1 -l 1 cat $DN			|| fail "syntaxe -i1 -l 1"
 
-./detecter -l1 -i 1 cat $DN			|| fail "syntaxe -l 1 -i1"
+$V ./detecter -l1 -i 1 cat $DN			|| fail "syntaxe -l 1 -i1"
 
-./detecter -i 0 cat $DN				&& fail "intervalle nul"
+$V ./detecter -i 0 cat $DN				&& fail "intervalle nul"
 
-./detecter -i -1 cat $DN			&& fail "intervalle négatif"
+$V ./detecter -i -1 cat $DN			&& fail "intervalle négatif"
 
-./detecter -l -1 cat $DN			&& fail "limite négative"
+$V ./detecter -l -1 cat $DN			&& fail "limite négative"
 
-./detecter -i1 -l1				&& fail "pas de cmd"
+$V ./detecter -i1 -l1				&& fail "pas de cmd"
 
-./detecter -c -i1 -l1 cat $DN > $DN		|| fail "syntaxe -c"
+$V ./detecter -c -i1 -l1 cat $DN > $DN		|| fail "syntaxe -c"
 
-./detecter -t %S -c -i1 -l1 cat $DN > $DN	|| fail "syntaxe -t %S"
+$V ./detecter -t %S -c -i1 -l1 cat $DN > $DN	|| fail "syntaxe -t %S"
 
 exit 0

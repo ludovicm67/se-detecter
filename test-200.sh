@@ -25,8 +25,8 @@ fail ()
 
 DN=/dev/null
 
-./detecter -a cat $DN && fail "option -a inconnue"
-./detecter -t "" cat $DN && fail "format pour le temps vide !"
-./detecter commandeInconnue && fail "commande inconnue"
+$V ./detecter -a cat $DN && fail "option -a inconnue"
+$V ./detecter -t "" cat $DN && fail "format pour le temps vide !"
+$V ./detecter commandeInconnue && fail "commande inconnue"
 
 exit 0

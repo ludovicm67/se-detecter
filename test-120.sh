@@ -45,7 +45,7 @@ do
 done > f3.tmp
 
 rm -f f1.tmp
-./detecter -i1 -l$((N*2)) ./script.tmp > f2.tmp \
+$V ./detecter -i1 -l$((N*2)) ./script.tmp > f2.tmp \
 	&& cmp -s f2.tmp f3.tmp 		|| fail "present-absent"
 
 
@@ -59,7 +59,7 @@ do
     echo exit 1
 done > f3.tmp
 
-./detecter -c -i1 -l$((N*2)) ./script.tmp > f2.tmp \
+$V ./detecter -c -i1 -l$((N*2)) ./script.tmp > f2.tmp \
 	&& cmp -s f2.tmp f3.tmp 		|| fail "present-absent -c"
 
 

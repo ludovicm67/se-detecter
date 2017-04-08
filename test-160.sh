@@ -37,14 +37,14 @@ chmod +x script.tmp
 
 N=24		# fichier de 2^N octets
 rm -f f1.tmp
-./detecter -i1 -l$N ./script.tmp > /dev/null	|| fail "gros volume devnull"
+$V ./detecter -i1 -l$N ./script.tmp > /dev/null	|| fail "gros volume devnull"
 
 for i in $(seq 1 6)
 do
     cat f1.tmp
 done > f3.tmp	# f3 = 6 * f1
 
-./detecter -i1 -l2 ./script.tmp > f2.tmp \
+$V ./detecter -i1 -l2 ./script.tmp > f2.tmp \
 	&& cmp -s f2.tmp f3.tmp 		|| fail "gros volume test"
 
 exit 0
