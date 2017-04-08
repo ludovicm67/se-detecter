@@ -8,40 +8,38 @@
 
 #define BUFFER_SIZE 1024
 
-#define FILS \
-    CHECK_ERR(close(tube[0]), "close tube[0] (fils)", b); \
-    CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)", b); \
-    CHECK_ERR(close(tube[1]), "close tube[1] (fils)", b); \
-    execvp(argv[optind], args); \
-    CHECK_EXEC(b);
+#define FILS()                                                  \
+    if(!pid) {                                                  \
+        CHECK_ERR(close(tube[0]), "close tube[0] (fils)");      \
+        CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)");             \
+        CHECK_ERR(close(tube[1]), "close tube[1] (fils)");      \
+        execvp(argv[optind], args);                             \
+        perror("execvp");                                       \
+        free_buffer(b);                                         \
+        CHECK_ERR(kill(getpid(), SIGUSR1), "kill");             \
+        exit(EXIT_FAILURE);                                     \
+    }
 
 // Affiche un message sur la sortie d'erreur standard si status == value
 // et quitte le programme avec un EXIT_FAILURE
-#define CHECK_ERRVALUE(status, value, msg, b)           \
-    if(status == value) {                               \
-        fprintf(stderr, "%s\n", msg);                   \
-        free_buffer(b);                                 \
-        exit(EXIT_FAILURE);                             \
+#define CHECK_ERRVALUE(status, value, msg)                      \
+    if(status == value) {                                       \
+        fprintf(stderr, "%s\n", msg);                           \
+        free_buffer(b);                                         \
+        exit(EXIT_FAILURE);                                     \
     }
 
 // Affiche un message sur la sortie d'erreur standard si status == NULL,
 // et quitte le programme avec un EXIT_FAILURE
-#define CHECK_NULL(status, msg, b) CHECK_ERRVALUE(status, NULL, msg, b)
+#define CHECK_NULL(status, msg) CHECK_ERRVALUE(status, NULL, msg)
 
 // Affiche un perror et quitte le programme avec un EXIT_FAILURE si status==-1
-#define CHECK_ERR(status, msg, b)                       \
-    if(status == -1) {                                  \
-        perror(msg);                                    \
-        free_buffer(b);                                 \
-        exit(EXIT_FAILURE);                             \
+#define CHECK_ERR(status, msg)                                  \
+    if(status == -1) {                                          \
+        perror(msg);                                            \
+        free_buffer(b);                                         \
+        exit(EXIT_FAILURE);                                     \
     }
-
-// Gère les erreurs après un exec
-#define CHECK_EXEC(b)                                   \
-    perror("execvp");                                   \
-    free_buffer(b);                                     \
-    CHECK_ERR(kill(getpid(), SIGUSR1), "kill", NULL);   \
-    exit(EXIT_FAILURE)
 
 // Structure pour un buffer chaîné
 typedef struct buffer {
@@ -69,7 +67,7 @@ void free_buffer(Buffer b) {
  */
 Buffer new_buffer() {
     Buffer b = malloc(sizeof(struct buffer));
-    CHECK_NULL(b, "buffer non alloué", b);
+    CHECK_NULL(b, "buffer non alloué");
     b->next = NULL;
     b->size = 0;
     return b;
@@ -85,7 +83,7 @@ Buffer new_buffer() {
 void print_buffer(Buffer b) {
     if(!b) return;
     for(; b->next != NULL; b = b->next) {
-        CHECK_ERR(write(1, b->content, b->size), "write buffer", b);
+        CHECK_ERR(write(1, b->content, b->size), "write buffer");
     }
 }
 
@@ -146,18 +144,18 @@ void print_time(char * time_format, Buffer b) {
     t = time(NULL);
     tmp = localtime(&t);
 
-    CHECK_NULL(tmp, "localtime a une valeur égale à NULL", b);
+    CHECK_NULL(tmp, "localtime a une valeur égale à NULL");
 
     CHECK_ERRVALUE(
         (nbc = strftime(outstr, sizeof(outstr)-1, time_format, tmp)),
         0,
-        "strftime vaut 0 : le format pour le temps est-il bien renseigné ?", b
+        "strftime vaut 0 : le format pour le temps est-il bien renseigné ?"
     );
 
     outstr[nbc++] = '\n';
     outstr[nbc] = '\0';
 
-    CHECK_ERR(write(1, outstr, nbc), "write", b);
+    CHECK_ERR(write(1, outstr, nbc), "write");
 }
 
 int main(int argc, char *argv[]) {
@@ -210,17 +208,16 @@ int main(int argc, char *argv[]) {
 
     while(limit >= 0) {
         if(time_format) print_time(time_format, b);
-        CHECK_ERR(pipe(tube), "pipe", b);
-        CHECK_ERR((pid = fork()), "fork", b);
-        if(!pid) { // fils
-            FILS;
-        } else { // père
-            CHECK_ERR(close(tube[1]), "close tube[1] (parent)", b);
-            affiche = read_buffer(tube[0], b);
-            if(first || affiche) print_buffer(b);
-            CHECK_ERR(close(tube[0]), "close tube[0] (parent)", b);
-        }
-        CHECK_ERR(wait(&raison), "wait", b);
+        CHECK_ERR(pipe(tube), "pipe");
+        CHECK_ERR((pid = fork()), "fork");
+
+        FILS();
+
+        CHECK_ERR(close(tube[1]), "close tube[1] (parent)");
+        affiche = read_buffer(tube[0], b);
+        if(first || affiche) print_buffer(b);
+        CHECK_ERR(close(tube[0]), "close tube[0] (parent)");
+        CHECK_ERR(wait(&raison), "wait");
 
         if(WIFEXITED(raison)) code = WEXITSTATUS(raison);
         else {
@@ -243,7 +240,7 @@ int main(int argc, char *argv[]) {
         if(limit == 1) break;
         if(limit > 0) limit--;
 
-        CHECK_ERR(usleep(interval * 1000), "usleep", b);
+        CHECK_ERR(usleep(interval * 1000), "usleep");
     }
 
     free_buffer(b);
