@@ -15,7 +15,7 @@
 
 # créer un nouveau fichier detecter.macroless.c, en récupérant les includes
 # du fichier detecter.c
-echo "$(sed '/^#include /!d' detecter.c)\n" > detecter.macroless.c
+printf "$(sed '/^#include /!d' detecter.c)\n\n" > detecter.macroless.c
 
 # ajoute au fichier créé précédemment le reste du code
 # en appliquant les macros
