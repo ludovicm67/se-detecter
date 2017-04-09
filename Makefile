@@ -62,3 +62,10 @@ clean:
 	rm -f tags core
 	rm -f *.macroless*
 
+archive: clean
+	@rm -f *.tar.gz
+	@echo "Création de l'archive 'Stein_Eloise___Muller_Ludovic.tar.gz' contenant :"
+	@tar -pcvzf Stein_Eloise___Muller_Ludovic.tar.gz * \
+	--exclude='.git' --exclude='*.tar.gz' --exclude='*.md' \
+	--warning=no-file-changed || exit 0
+
