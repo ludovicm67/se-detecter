@@ -10,12 +10,12 @@
 
 #define FILS()                                                  \
     if(!pid) {                                                  \
+        free_buffer(b);                                         \
         CHECK_ERR(close(tube[0]), "close tube[0] (fils)");      \
         CHECK_ERR(dup2(tube[1], 1), "dup2 (fils)");             \
         CHECK_ERR(close(tube[1]), "close tube[1] (fils)");      \
         execvp(argv[optind], args);                             \
         perror("execvp");                                       \
-        free_buffer(b);                                         \
         CHECK_ERR(kill(getpid(), SIGUSR1), "kill");             \
         exit(EXIT_FAILURE);                                     \
     }

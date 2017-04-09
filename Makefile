@@ -1,29 +1,29 @@
 #
 # Ce Makefile contient les cibles suivantes :
 #
-# all		: compile les programmes
-# clean		: supprime les fichiers générés automatiquement
-# coverage	: compile les programmes pour mesurer la couverture de code
-# test		: lance tous les tests (scripts shell test-xxx.sh)
-#		  (sans appeler valgrind)
-# gcov		: génère les rapports de couverture (à lancer après avoir
-#		  lancé les cibles 'coverage' et 'test').
-#		  Résultats dans *.gcov
-# ctags		: génère un fichier tags pour la navigation avec vim.
-#		  (voir http://usevim.com/2013/01/18/tags/)
+# all       : compile les programmes
+# clean     : supprime les fichiers générés automatiquement
+# coverage  : compile les programmes pour mesurer la couverture de code
+# test      : lance tous les tests (scripts shell test-xxx.sh)
+#         (sans appeler valgrind)
+# gcov      : génère les rapports de couverture (à lancer après avoir
+#         lancé les cibles 'coverage' et 'test').
+#         Résultats dans *.gcov
+# ctags     : génère un fichier tags pour la navigation avec vim.
+#         (voir http://usevim.com/2013/01/18/tags/)
 #
 # De plus, les cibles supplémentaires suivantes sont fournies pour
 # simplifier les tâches répétitives :
 #
-# test-avec-valgrind	: lance les tests avec valgrind (conseillé)
-# couverture-et-tests	: automatise les tests avec rapport de couverture
+# test-avec-valgrind    : lance les tests avec valgrind (conseillé)
+# couverture-et-tests   : automatise les tests avec rapport de couverture
 #
 
 COV = -coverage
 
 CFLAGS = -Wall -Wextra -Werror -g $(COVERAGE)
 
-PROGS	= detecter
+PROGS   = detecter
 
 all: ctags $(PROGS)
 
@@ -39,21 +39,26 @@ gcov:
 # Si on souhaite utiliser valgrind (conseillé), positionner la
 # variable VALGRIND ou utiliser la cible "test-avec-valgrind"
 
-test:	test-avec-valgrind
+test:   test-avec-valgrind
 
 test-sans-valgrind: all
 	@for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
 
 test-avec-valgrind: all
-	VALGRIND="valgrind" ; export VALGRIND ; for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
+	@VALGRIND="valgrind" ; export VALGRIND ; for i in test-*.sh ; do echo $$i ; sh $$i || exit 1 ; done
+	@grep -R "== LEAK SUMMARY:" --include 'test-*.log' * \
+		&& echo ' => des soucis de mémoire ont étés rencontrés...' \
+		|| echo ' => aucun soucis de mémoire'
 
 couverture-et-tests: clean coverage test gcov
 
 ctags:
-	ctags *.[ch]
+	@ctags *.[ch]
 
 clean:
 	rm -f $(PROGS) *.o
 	rm -f *.gc*
 	rm -f *.log *.tmp
 	rm -f tags core
+	rm -f *.macroless*
+
